@@ -125,54 +125,54 @@ class RestaurantMenuItem(models.Model):
         return f'{self.restaurant.name} - {self.product.name}'
 
 
-# class Order(models.Model):
-#     firstname = models.CharField(
-#         'имя клиента',
-#         max_length=25
-#     )
-#     lastname = models.CharField(
-#         'фамилия клиента',
-#         max_length=25
-#     )
-#     phone = PhoneNumberField(
-#         'телефон клиента',
-#         region='RU'
-#     )
-#     address = models.CharField(
-#         'адрес клиента',
-#         max_length=100
-#     )
-#     products = models.ManyToManyField(
-#         Product,
-#         through='OrderProduct'
-#     )
-#
-#     class Meta:
-#         verbose_name = 'заказ'
-#         verbose_name_plural = 'заказы'
-#
-#     def __str__(self):
-#         return f'{self.firstname} {self.lastname} {self.address}'
-#
-#
-# class OrderProduct(models.Model):
-#     order = ForeignKey(
-#         Order,
-#         verbose_name='заказ',
-#         on_delete=models.CASCADE,
-#     )
-#     product = models.ForeignKey(
-#         Product,
-#         verbose_name='товар',
-#         on_delete=models.CASCADE,
-#     )
-#     quantity = models.PositiveSmallIntegerField(
-#         'количество',
-#     )
-#
-#     class Meta:
-#         verbose_name = 'элемент заказа'
-#         verbose_name_plural = 'элементы заказа'
-#
-#     def __str__(self):
-#         return f'{self.product.name} {self.order}'
+class Order(models.Model):
+    firstname = models.CharField(
+        'имя клиента',
+        max_length=25
+    )
+    lastname = models.CharField(
+        'фамилия клиента',
+        max_length=25
+    )
+    phone = PhoneNumberField(
+        'телефон клиента',
+        region='RU'
+    )
+    address = models.CharField(
+        'адрес клиента',
+        max_length=100
+    )
+    products = models.ManyToManyField(
+        Product,
+        through='OrderProduct'
+    )
+
+    class Meta:
+        verbose_name = 'заказ'
+        verbose_name_plural = 'заказы'
+
+    def __str__(self):
+        return f'{self.firstname} {self.lastname} {self.address}'
+
+
+class OrderProduct(models.Model):
+    order = ForeignKey(
+        Order,
+        verbose_name='заказ',
+        on_delete=models.CASCADE,
+    )
+    product = models.ForeignKey(
+        Product,
+        verbose_name='товар',
+        on_delete=models.CASCADE,
+    )
+    quantity = models.PositiveSmallIntegerField(
+        'количество',
+    )
+
+    class Meta:
+        verbose_name = 'элемент заказа'
+        verbose_name_plural = 'элементы заказа'
+
+    def __str__(self):
+        return f'{self.product.name} {self.order}'

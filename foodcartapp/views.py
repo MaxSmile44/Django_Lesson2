@@ -1,11 +1,11 @@
-# import json
+import json
 
 from django.http import JsonResponse
 from django.templatetags.static import static
 
 
-# from .models import Order
-# from .models import OrderProduct
+from .models import Order
+from .models import OrderProduct
 from .models import Product
 
 
@@ -62,14 +62,14 @@ def product_list_api(request):
 
 
 def register_order(request):
-    # try:
-    #     data = json.loads(request.body.decode())
-    #     order = Order.objects.create(firstname=data['firstname'], lastname=data['lastname'], phone=data['phonenumber'], address=data['address'])
-    #     for product in data['products']:
-    #         product_name = Product.objects.get(pk=product['product'])
-    #         OrderProduct.objects.create(order=order, product=product_name, quantity=product['quantity'])
-    # except ValueError:
-    #     return JsonResponse({
-    #         'error': 'error',
-    #     })
+    try:
+        data = json.loads(request.body.decode())
+        order = Order.objects.create(firstname=data['firstname'], lastname=data['lastname'], phone=data['phonenumber'], address=data['address'])
+        for product in data['products']:
+            product_name = Product.objects.get(pk=product['product'])
+            OrderProduct.objects.create(order=order, product=product_name, quantity=product['quantity'])
+    except ValueError:
+        return JsonResponse({
+            'error': 'error',
+        })
     return JsonResponse({})
