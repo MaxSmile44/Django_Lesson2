@@ -2,7 +2,8 @@ import json
 
 from django.http import JsonResponse
 from django.templatetags.static import static
-
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 
 from .models import Order
 from .models import OrderProduct
@@ -61,15 +62,35 @@ def product_list_api(request):
     })
 
 
+@api_view(['GET', 'POST'])
 def register_order(request):
-    try:
-        data = json.loads(request.body.decode())
-        order = Order.objects.create(firstname=data['firstname'], lastname=data['lastname'], phone=data['phonenumber'], address=data['address'])
+    data = request.data
+    if request.method == 'POST':
+        order = Order.objects.create(
+            firstname=data['firstname'],
+            lastname=data['lastname'],
+            phone=data['phonenumber'],
+            address=data['address']
+        )
         for product in data['products']:
             product_name = Product.objects.get(pk=product['product'])
             OrderProduct.objects.create(order=order, product=product_name, quantity=product['quantity'])
-    except ValueError:
-        return JsonResponse({
-            'error': 'error',
-        })
-    return JsonResponse({})
+    elif request.method == 'GET':
+        orders = Order.objects.prefetch_related('orderproduct_set__product')
+        all_orders = []
+        for order in orders:
+            products = []
+            for product in order.orderproduct_set.all():
+                products.append({
+                    'product': product.product.name,
+                    'quantity': product.quantity,
+                })
+            all_orders.append({
+                'firstname': order.firstname,
+                'lastname': order.lastname,
+                'phone': str(order.phone),
+                'address': order.address,
+                'products': products,
+            })
+        return Response(all_orders)
+    return Response({})
