@@ -1,4 +1,5 @@
 import json
+import phonenumbers
 
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import JsonResponse
@@ -10,7 +11,7 @@ from rest_framework.response import Response
 from .models import Order
 from .models import OrderProduct
 from .models import Product
-import phonenumbers
+
 
 def banners_list_api(request):
     # FIXME move data to db?
@@ -157,4 +158,7 @@ def register_order(request):
             return Response({})
     except ObjectDoesNotExist as error:
         return Response(f'{error}', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
+    except TypeError as error:
+        return Response(f'{error}', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except KeyError as error:
+        return Response(f'{error}', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
