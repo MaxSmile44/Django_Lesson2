@@ -7,6 +7,7 @@ from django.templatetags.static import static
 from rest_framework import status, serializers
 from rest_framework.decorators import api_view
 from rest_framework.serializers import ModelSerializer, ValidationError
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from .models import Order
@@ -75,7 +76,7 @@ class OrderProductSerializer(ModelSerializer):
 
 
 class OrderSerializer(ModelSerializer):
-    products = OrderProductSerializer(many=True, allow_empty=False)
+    products = OrderProductSerializer(many=True, allow_empty=False, write_only=True)
     phonenumber = serializers.CharField(source='phone')
 
     class Meta:
@@ -86,12 +87,19 @@ class OrderSerializer(ModelSerializer):
         phone = phonenumbers.parse(value, 'RU')
         if not phonenumbers.is_valid_number(phone):
             raise ValidationError([f"Invalid phonenumber: {value}"])
+        return value
 
 
 @api_view(['GET', 'POST'])
 def register_order(request):
     try:
-        if request.method == 'POST':
+        if request.method == 'GET':
+            serializer = OrderSerializer(Order.objects.all(), many=True)
+            # json_data = json.dumps(serializer.data, ensure_ascii=False)
+            # rendered_content = JSONRenderer().render(json.loads(json_data))
+            content = JSONRenderer().render(serializer.data)
+            return Response(content)
+        elif request.method == 'POST':
             serializer = OrderSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
 
@@ -109,9 +117,8 @@ def register_order(request):
                 OrderProduct.objects.create(order=order, product=product_obj, quantity=product['quantity'])
 
             content = {'New order added': serializer.validated_data}
-            return Response(content, status=status.HTTP_200_OK)
-        else:
-            return Response({})
+            return Response(content)
+
     except ObjectDoesNotExist as error:
         return Response(f'{error}', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except TypeError as error:
