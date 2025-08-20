@@ -95,10 +95,7 @@ def register_order(request):
     try:
         if request.method == 'GET':
             serializer = OrderSerializer(Order.objects.all(), many=True)
-            # json_data = json.dumps(serializer.data, ensure_ascii=False)
-            # rendered_content = JSONRenderer().render(json.loads(json_data))
-            content = JSONRenderer().render(serializer.data)
-            return Response(content)
+            return Response(serializer.data)
         elif request.method == 'POST':
             serializer = OrderSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
