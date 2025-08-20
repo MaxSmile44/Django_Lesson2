@@ -100,17 +100,22 @@ def register_order(request):
                 phone=serializer.validated_data['phone'],
                 address=serializer.validated_data['address']
             )
+            products_ids = [product['product_id'] for product in serializer.validated_data['products']]
+            products = Product.objects.filter(pk__in=products_ids)
+            product_map = {product.pk: product for product in products}
             for product in serializer.validated_data['products']:
-                product_name = Product.objects.get(pk=product['product_id'])
-                OrderProduct.objects.create(order=order, product=product_name, quantity=product['quantity'])
+                product_obj = product_map.get(product['product_id'])
+                OrderProduct.objects.create(order=order, product=product_obj, quantity=product['quantity'])
 
             content = {'New order added': serializer.validated_data}
             return Response(content, status=status.HTTP_200_OK)
         else:
-                return Response({})
+            return Response({})
     except ObjectDoesNotExist as error:
         return Response(f'{error}', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except TypeError as error:
         return Response(f'{error}', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except KeyError as error:
+        return Response(f'{error}', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except ValueError as error:
         return Response(f'{error}', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
