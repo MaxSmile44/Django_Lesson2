@@ -82,6 +82,11 @@ class OrderSerializer(ModelSerializer):
         model = Order
         fields = ['firstname', 'lastname', 'phonenumber', 'address', 'products']
 
+    def validate_phonenumber(self, value):
+        phone = phonenumbers.parse(value, 'RU')
+        if not phonenumbers.is_valid_number(phone):
+            raise ValidationError([f"Invalid phonenumber: {value}"])
+
 
 @api_view(['GET', 'POST'])
 def register_order(request):
@@ -89,10 +94,6 @@ def register_order(request):
         if request.method == 'POST':
             serializer = OrderSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-
-            phone = phonenumbers.parse(serializer.validated_data['phone'], 'RU')
-            if not phonenumbers.is_valid_number(phone):
-                raise ValidationError([f"Invalid phonenumber: {serializer.validated_data['phone']}"])
 
             order = Order.objects.create(
                 firstname=serializer.validated_data['firstname'],

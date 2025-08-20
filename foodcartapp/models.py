@@ -144,6 +144,7 @@ class Order(models.Model):
     )
     products = models.ManyToManyField(
         Product,
+        related_name='products',
         through='OrderProduct'
     )
 
