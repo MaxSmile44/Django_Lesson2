@@ -1,6 +1,6 @@
 from django.db import models
 from django.core.validators import MinValueValidator
-from django.db.models import ForeignKey
+from django.db.models import Sum, F, ForeignKey
 from phonenumber_field.modelfields import PhoneNumberField
 
 
@@ -40,22 +40,8 @@ class ProductQuerySet(models.QuerySet):
 
 class OrderQuerySet(models.QuerySet):
     def order_price(self):
-        orders = self.prefetch_related('orderproduct_set__product')
-        with_price_orders = []
-        for order in orders:
-            prices = [product.price for product in order.products.all()]
-            quantitys = [product.quantity for product in order.orderproduct_set.all()]
-            order_price = sum(list(map(lambda x, y: x * y, prices, quantitys)))
-            new_order = {
-                'id': order.id,
-                'price': order_price,
-                'firstname': order.firstname,
-                'lastname': order.lastname,
-                'phone': order.phone,
-                'address': order.address
-            }
-            with_price_orders.append(new_order)
-        return with_price_orders
+        orders = self.annotate(order_price=Sum(F('products__price') * F('orderproduct__quantity')))
+        return orders
 
 
 class ProductCategory(models.Model):
