@@ -7,7 +7,6 @@ from django.templatetags.static import static
 from rest_framework import status, serializers
 from rest_framework.decorators import api_view
 from rest_framework.serializers import ModelSerializer, ValidationError
-from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 
 from .models import Order
