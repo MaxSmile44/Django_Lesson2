@@ -38,6 +38,26 @@ class ProductQuerySet(models.QuerySet):
         return self.filter(pk__in=products)
 
 
+class OrderQuerySet(models.QuerySet):
+    def order_price(self):
+        orders = self.prefetch_related('orderproduct_set__product')
+        with_price_orders = []
+        for order in orders:
+            prices = [product.price for product in order.products.all()]
+            quantitys = [product.quantity for product in order.orderproduct_set.all()]
+            order_price = sum(list(map(lambda x, y: x * y, prices, quantitys)))
+            new_order = {
+                'id': order.id,
+                'price': order_price,
+                'firstname': order.firstname,
+                'lastname': order.lastname,
+                'phone': order.phone,
+                'address': order.address
+            }
+            with_price_orders.append(new_order)
+        return with_price_orders
+
+
 class ProductCategory(models.Model):
     name = models.CharField(
         'название',
@@ -147,6 +167,8 @@ class Order(models.Model):
         related_name='products',
         through='OrderProduct'
     )
+
+    objects = OrderQuerySet.as_manager()
 
     class Meta:
         verbose_name = 'заказ'

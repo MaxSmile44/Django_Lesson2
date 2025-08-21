@@ -9,9 +9,7 @@ from rest_framework.decorators import api_view
 from rest_framework.serializers import ModelSerializer, ValidationError
 from rest_framework.response import Response
 
-from .models import Order
-from .models import OrderProduct
-from .models import Product
+from .models import Order, OrderProduct, Product
 
 
 def banners_list_api(request):
