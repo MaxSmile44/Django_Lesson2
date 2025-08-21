@@ -68,7 +68,7 @@ def product_list_api(request):
 
 
 class OrderProductSerializer(ModelSerializer):
-    product = serializers.IntegerField(source='product_id')
+    product = serializers.IntegerField()
 
     class Meta:
         model = OrderProduct
@@ -106,11 +106,11 @@ def register_order(request):
                 phone=serializer.validated_data['phone'],
                 address=serializer.validated_data['address']
             )
-            products_ids = [product['product_id'] for product in serializer.validated_data['products']]
+            products_ids = [product['product'] for product in serializer.validated_data['products']]
             products = Product.objects.filter(pk__in=products_ids)
             product_map = {product.pk: product for product in products}
             for product in serializer.validated_data['products']:
-                product_obj = product_map.get(product['product_id'])
+                product_obj = product_map.get(product['product'])
                 OrderProduct.objects.create(order=order, product=product_obj, quantity=product['quantity'])
 
             content = {'New order added': serializer.validated_data}
