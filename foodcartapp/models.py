@@ -40,7 +40,7 @@ class ProductQuerySet(models.QuerySet):
 
 class OrderQuerySet(models.QuerySet):
     def order_price(self):
-        orders = self.annotate(order_price=Sum(F('products__price') * F('orderproduct__quantity')))
+        orders = self.annotate(order_price=Sum(F('orderproduct__price') * F('orderproduct__quantity')))
         return orders
 
 
@@ -178,6 +178,15 @@ class OrderProduct(models.Model):
     quantity = models.PositiveSmallIntegerField(
         'количество',
     )
+    price = models.DecimalField(
+        'цена',
+        max_digits=8,
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        editable=True,
+        null=True,
+        blank=True
+    )
 
     class Meta:
         verbose_name = 'элемент заказа'
@@ -185,3 +194,8 @@ class OrderProduct(models.Model):
 
     def __str__(self):
         return f'{self.product.name} {self.order}'
+
+    def save(self, *args, **kwargs):
+        if not self.price:
+            self.price = self.product.price
+        super().save(*args, **kwargs)
