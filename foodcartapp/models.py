@@ -132,6 +132,16 @@ class RestaurantMenuItem(models.Model):
 
 
 class Order(models.Model):
+    Raw = 'Необработанный'
+    Cooking = 'Готовится'
+    Transport = 'В пути'
+    Completed = 'Завершен'
+    ORDER_STATUS_CHOICES = [
+        (Raw, 'Необработанный'),
+        (Cooking, 'Готовится'),
+        (Transport, 'В пути'),
+        (Completed, 'Завершен'),
+    ]
     firstname = models.CharField(
         'имя клиента',
         max_length=25
@@ -152,6 +162,13 @@ class Order(models.Model):
         Product,
         related_name='products',
         through='OrderProduct'
+    )
+    status = models.CharField(
+        'статус заказа',
+        max_length=25,
+        choices=ORDER_STATUS_CHOICES,
+        default=Raw,
+        db_index=True
     )
 
     objects = OrderQuerySet.as_manager()
