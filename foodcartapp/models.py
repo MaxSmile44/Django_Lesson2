@@ -183,9 +183,7 @@ class OrderProduct(models.Model):
         max_digits=8,
         decimal_places=2,
         validators=[MinValueValidator(0)],
-        editable=True,
-        null=True,
-        blank=True
+        editable=True
     )
 
     class Meta:
@@ -194,8 +192,3 @@ class OrderProduct(models.Model):
 
     def __str__(self):
         return f'{self.product.name} {self.order}'
-
-    def save(self, *args, **kwargs):
-        if not self.price:
-            self.price = self.product.price
-        super().save(*args, **kwargs)

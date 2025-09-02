@@ -108,7 +108,7 @@ def register_order(request):
             product_map = {product.pk: product for product in products}
             for product in serializer.validated_data['products']:
                 product_obj = product_map.get(product['product'])
-                OrderProduct.objects.create(order=order, product=product_obj, quantity=product['quantity'])
+                OrderProduct.objects.create(order=order, product=product_obj, quantity=product['quantity'], price=product_obj.price)
 
             content = {'New order added': serializer.validated_data}
             return Response(content)
