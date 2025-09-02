@@ -2,6 +2,7 @@ import json
 import phonenumbers
 
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.http import JsonResponse
 from django.templatetags.static import static
 from rest_framework import status, serializers
@@ -87,6 +88,7 @@ class OrderSerializer(ModelSerializer):
         return value
 
 
+@transaction.atomic
 @api_view(['GET', 'POST'])
 def register_order(request):
     try:
