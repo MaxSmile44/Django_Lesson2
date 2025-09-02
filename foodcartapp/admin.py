@@ -1,7 +1,8 @@
 from django.contrib import admin
-from django.shortcuts import reverse
+from django.shortcuts import reverse, redirect
 from django.templatetags.static import static
 from django.utils.html import format_html
+from django.utils.http import url_has_allowed_host_and_scheme
 
 from .models import Order
 from .models import OrderProduct
@@ -25,6 +26,13 @@ class OrderProductInline(admin.TabularInline):
 @admin.register(Order)
 class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderProductInline]
+
+    def response_change(self, request, obj):
+        next_url = request.GET.get('next')
+        if url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
+            return redirect(next_url)
+        else:
+            return super().response_change(request, obj)
 
 
 @admin.register(Restaurant)
