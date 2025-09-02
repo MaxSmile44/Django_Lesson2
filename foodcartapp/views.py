@@ -88,32 +88,32 @@ class OrderSerializer(ModelSerializer):
         return value
 
 
-@transaction.atomic
 @api_view(['GET', 'POST'])
 def register_order(request):
     try:
-        if request.method == 'GET':
-            serializer = OrderSerializer(Order.objects.all(), many=True)
-            return Response(serializer.data)
-        elif request.method == 'POST':
-            serializer = OrderSerializer(data=request.data)
-            serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            if request.method == 'GET':
+                serializer = OrderSerializer(Order.objects.all(), many=True)
+                return Response(serializer.data)
+            elif request.method == 'POST':
+                serializer = OrderSerializer(data=request.data)
+                serializer.is_valid(raise_exception=True)
 
-            order = Order.objects.create(
-                firstname=serializer.validated_data['firstname'],
-                lastname=serializer.validated_data['lastname'],
-                phone=serializer.validated_data['phone'],
-                address=serializer.validated_data['address']
-            )
-            products_ids = [product['product'] for product in serializer.validated_data['products']]
-            products = Product.objects.filter(pk__in=products_ids)
-            product_map = {product.pk: product for product in products}
-            for product in serializer.validated_data['products']:
-                product_obj = product_map.get(product['product'])
-                OrderProduct.objects.create(order=order, product=product_obj, quantity=product['quantity'], price=product_obj.price)
+                order = Order.objects.create(
+                    firstname=serializer.validated_data['firstname'],
+                    lastname=serializer.validated_data['lastname'],
+                    phone=serializer.validated_data['phone'],
+                    address=serializer.validated_data['address']
+                )
+                products_ids = [product['product'] for product in serializer.validated_data['products']]
+                products = Product.objects.filter(pk__in=products_ids)
+                product_map = {product.pk: product for product in products}
+                for product in serializer.validated_data['products']:
+                    product_obj = product_map.get(product['product'])
+                    OrderProduct.objects.create(order=order, product=product_obj, quantity=product['quantity'], price=product_obj.price)
 
-            content = {'New order added': serializer.validated_data}
-            return Response(content)
+                content = {'New order added': serializer.validated_data}
+                return Response(content)
 
     except ObjectDoesNotExist as error:
         return Response(f'{error}', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
@@ -122,4 +122,6 @@ def register_order(request):
     except KeyError as error:
         return Response(f'{error}', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     except ValueError as error:
+        return Response(f'{error}', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    except AttributeError as error:
         return Response(f'{error}', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
