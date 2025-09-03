@@ -33,6 +33,7 @@ class OrderAdmin(admin.ModelAdmin):
         'phone',
         'address',
         'status',
+        'payment',
         'comment',
         'order_date',
         'call_date',

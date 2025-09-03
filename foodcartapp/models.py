@@ -142,6 +142,12 @@ class Order(models.Model):
         (Transport, 'В пути'),
         (Completed, 'Завершен')
     ]
+    Cash = 'Наличностью'
+    Electronic = 'Электронно'
+    PAYMENT_CHOICES = [
+        (Cash, 'Наличностью'),
+        (Electronic, 'Электронно')
+    ]
     firstname = models.CharField(
         'имя клиента',
         max_length=25
@@ -190,6 +196,13 @@ class Order(models.Model):
         'дата и время доставки',
         null=True,
         blank=True,
+        db_index=True
+    )
+    payment = models.CharField(
+        'способ оплаты',
+        max_length=25,
+        choices=PAYMENT_CHOICES,
+        default=Electronic,
         db_index=True
     )
 
