@@ -12,12 +12,12 @@ class Restaurant(models.Model):
     address = models.CharField(
         'адрес',
         max_length=100,
-        blank=True,
+        blank=True
     )
     contact_phone = models.CharField(
         'контактный телефон',
         max_length=50,
-        blank=True,
+        blank=True
     )
 
     class Meta:
@@ -69,7 +69,7 @@ class Product(models.Model):
         related_name='products',
         null=True,
         blank=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.SET_NULL
     )
     price = models.DecimalField(
         'цена',
@@ -83,12 +83,12 @@ class Product(models.Model):
     special_status = models.BooleanField(
         'спец.предложение',
         default=False,
-        db_index=True,
+        db_index=True
     )
     description = models.TextField(
         'описание',
         max_length=200,
-        blank=True,
+        blank=True
     )
 
     objects = ProductQuerySet.as_manager()
@@ -106,13 +106,13 @@ class RestaurantMenuItem(models.Model):
         Restaurant,
         verbose_name='ресторан',
         related_name='menu_items',
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE
     )
     product = models.ForeignKey(
         Product,
         verbose_name='продукт',
         related_name='menu_items',
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE
     )
     availability = models.BooleanField(
         'в продаже',
@@ -140,7 +140,7 @@ class Order(models.Model):
         (Raw, 'Необработанный'),
         (Cooking, 'Готовится'),
         (Transport, 'В пути'),
-        (Completed, 'Завершен'),
+        (Completed, 'Завершен')
     ]
     firstname = models.CharField(
         'имя клиента',
@@ -173,7 +173,24 @@ class Order(models.Model):
     comment = models.CharField(
         'комментарий к заказу',
         max_length=200,
+        blank=True
+    )
+    order_date = models.DateTimeField(
+        'дата и время регистрации заказа',
+        auto_now_add=True,
+        db_index=True
+    )
+    call_date = models.DateTimeField(
+        'дата и время звонка',
+        null=True,
         blank=True,
+        db_index=True
+    )
+    delivery_date = models.DateTimeField(
+        'дата и время доставки',
+        null=True,
+        blank=True,
+        db_index=True
     )
 
     objects = OrderQuerySet.as_manager()
@@ -190,22 +207,21 @@ class OrderProduct(models.Model):
     order = ForeignKey(
         Order,
         verbose_name='заказ',
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE
     )
     product = models.ForeignKey(
         Product,
         verbose_name='товар',
-        on_delete=models.CASCADE,
+        on_delete=models.CASCADE
     )
     quantity = models.PositiveSmallIntegerField(
-        'количество',
+        'количество'
     )
     price = models.DecimalField(
         'цена',
         max_digits=8,
         decimal_places=2,
-        validators=[MinValueValidator(0)],
-        editable=True
+        validators=[MinValueValidator(0)]
     )
 
     class Meta:

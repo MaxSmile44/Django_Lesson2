@@ -27,6 +27,19 @@ class OrderProductInline(admin.TabularInline):
 class OrderAdmin(admin.ModelAdmin):
     inlines = [OrderProductInline]
 
+    fields = [
+        'firstname',
+        'lastname',
+        'phone',
+        'address',
+        'status',
+        'comment',
+        'order_date',
+        'call_date',
+        'delivery_date'
+    ]
+    readonly_fields = ('order_date',)
+
     def response_change(self, request, obj):
         next_url = request.GET.get('next')
         if url_has_allowed_host_and_scheme(next_url, allowed_hosts={request.get_host()}):
