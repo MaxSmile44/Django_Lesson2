@@ -35,6 +35,7 @@ class OrderAdmin(admin.ModelAdmin):
         'status',
         'payment',
         'comment',
+        'restaurant',
         'order_date',
         'call_date',
         'delivery_date'
