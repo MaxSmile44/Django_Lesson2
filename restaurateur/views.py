@@ -94,25 +94,25 @@ def view_orders(request):
     orders = Order.objects.prefetch_related('products').select_related('restaurant').order_price()
     items = RestaurantMenuItem.objects.select_related('restaurant', 'product').filter(availability=True)
 
-    order_menus = {order.id: [product.name for product in order.products.all()] for order in orders}
+    order_menus = {order.id: [product.id for product in order.products.all()] for order in orders}
 
     restaurant_menus = {}
     for item in items:
         restaurant_name = item.restaurant.name
-        product_name = item.product.name
+        product_id = item.product.id
         if restaurant_name not in restaurant_menus:
             restaurant_menus[restaurant_name] = []
-        restaurant_menus[restaurant_name].append(product_name)
+        restaurant_menus[restaurant_name].append(product_id)
 
-    valible_restaurants = {}
+    avalible_restaurants = {}
     for order_key, order_value in order_menus.items():
-        valible_restaurants[order_key] = []
+        avalible_restaurants[order_key] = []
         for restaurant_key, restaurant_value in restaurant_menus.items():
             if all([item in restaurant_value for item in order_value]):
-                valible_restaurants[order_key].append(restaurant_key)
+                avalible_restaurants[order_key].append(restaurant_key)
 
     for order in orders:
-        order.restaurant_names_list = valible_restaurants[order.id]
+        order.restaurant_names_list = avalible_restaurants[order.id]
 
     return render(request, template_name='order_items.html', context = {
         'order_items': orders

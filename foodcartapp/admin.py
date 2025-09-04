@@ -49,6 +49,27 @@ class OrderAdmin(admin.ModelAdmin):
         else:
             return super().response_change(request, obj)
 
+    def get_form(self, request, obj=None, **kwargs):
+        order_menu = [product.id for product in obj.products.all()]
+        items = RestaurantMenuItem.objects.select_related('restaurant', 'product').filter(availability=True)
+
+        restaurant_menus = {}
+        for item in items:
+            restaurant_id = item.restaurant.id
+            product_id = item.product.id
+            if restaurant_id not in restaurant_menus:
+                restaurant_menus[restaurant_id] = []
+            restaurant_menus[restaurant_id].append(product_id)
+
+        avalible_restaurants = []
+        for restaurant_key, restaurant_value in restaurant_menus.items():
+            if all([item in restaurant_value for item in order_menu]):
+                avalible_restaurants.append(restaurant_key)
+
+        form = super().get_form(request, obj, **kwargs)
+        form.base_fields['restaurant'].queryset = Restaurant.objects.filter(pk__in=avalible_restaurants )
+        return form
+
 
 @admin.register(Restaurant)
 class RestaurantAdmin(admin.ModelAdmin):
