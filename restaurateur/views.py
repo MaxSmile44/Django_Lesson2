@@ -112,25 +112,29 @@ def view_orders(request):
     items = RestaurantMenuItem.objects.select_related('restaurant', 'product').filter(availability=True)
 
     def fetch_coordinates(apikey, address):
-        base_url = "https://geocode-maps.yandex.ru/1.x"
-        response = requests.get(base_url, params={
-            "geocode": address,
-            "apikey": apikey,
-            "format": "json",
-        })
-        response.raise_for_status()
-        found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+        try:
+            base_url = "https://geocode-maps.yandex.ru/1.x"
+            response = requests.get(base_url, params={
+                "geocode": address,
+                "apikey": apikey,
+                "format": "json",
+            })
+            response.raise_for_status()
+            found_places = response.json()['response']['GeoObjectCollection']['featureMember']
 
-        if not found_places:
+            if not found_places:
+                return None
+
+            most_relevant = found_places[0]
+            lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+            return lon, lat
+        except requests.exceptions.HTTPError as error:
+            print(f'HTTPError: {error}')
             return None
-
-        most_relevant = found_places[0]
-        lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
-        return lon, lat
 
     order_menus = {order.id: [product.id for product in order.products.all()] for order in orders}
 
-    try:
+    if fetch_coordinates(apikey, 'Москва, Красная площадь'):
         restaurant_menus = {}
         restaurant_coordinates = {}
         for item in items:
@@ -161,15 +165,12 @@ def view_orders(request):
                     restaurant_coordinates[restrant_name]
                 ).km
                 avalible_restaurants_with_coords[order.id].append(
-                    # f'{restrant_name} - {restaurant_distance:.2f} км'
                     (restrant_name, round(restaurant_distance, 2))
                 )
             avalible_restaurants_with_coords[order.id] =(
                 sorted(avalible_restaurants_with_coords[order.id], key=itemgetter(1))
             )
             order.restaurant_names_list = avalible_restaurants_with_coords[order.id]
-    except requests.exceptions.HTTPError as error:
-        print(f'HTTPError: {error}')
 
     return render(request, template_name='order_items.html', context = {
         'order_items': orders
