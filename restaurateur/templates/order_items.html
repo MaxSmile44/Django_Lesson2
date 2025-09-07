@@ -37,11 +37,13 @@
           <td>{{order.phone}}</td>
           <td>{{order.address}}</td>
           <td>{{order.comment}}</td>
-          {% if order.restaurant is null %}
+          {% if order.restaurant is null and order.restaurant_names_list is null %}
+            <td>Ошибка определения координат</td>
+          {% elif order.restaurant is null %}
             <td><details>
               <summary>Может быть приготовлен ресторанами:</summary>
               {% for restaurant in order.restaurant_names_list %}
-                <li>{{restaurant}}</li>
+                <li>{{restaurant.0}} - {{restaurant.1}} км</li>
               {% endfor %}
             </details></td>
           {% else %}
