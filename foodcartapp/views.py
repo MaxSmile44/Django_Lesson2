@@ -1,4 +1,3 @@
-import json
 import phonenumbers
 
 from django.core.exceptions import ObjectDoesNotExist
@@ -11,6 +10,7 @@ from rest_framework.serializers import ModelSerializer, ValidationError
 from rest_framework.response import Response
 
 from .models import Order, OrderProduct, Product
+from coordinates.models import Coordinate
 
 
 def banners_list_api(request):
@@ -103,6 +103,9 @@ def register_order(request):
                     firstname=serializer.validated_data['firstname'],
                     lastname=serializer.validated_data['lastname'],
                     phone=serializer.validated_data['phone'],
+                    address=serializer.validated_data['address']
+                )
+                coordinate = Coordinate.objects.create(
                     address=serializer.validated_data['address']
                 )
                 products_ids = [product['product'] for product in serializer.validated_data['products']]
