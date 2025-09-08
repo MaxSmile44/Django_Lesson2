@@ -100,6 +100,8 @@ def view_orders(request):
     items = RestaurantMenuItem.objects.select_related('restaurant', 'product').filter(availability=True)
     coordinates = Coordinate.objects.all()
 
+    addresses_with_coords = {coordinate.address: [coordinate.lat, coordinate.lon] for coordinate in coordinates}
+
     order_menus = {order.id: [product.id for product in order.products.all()] for order in orders}
 
     restaurant_menus = {}
@@ -122,11 +124,11 @@ def view_orders(request):
 
     avalible_restaurants_with_distance = {}
     for order in orders:
-        if coordinates.filter(address=order.address).first():
-            coordinate = coordinates.filter(address=order.address).first()
+        if order.address in addresses_with_coords:
+            coordinate = addresses_with_coords[order.address]
             avalible_restaurants_with_distance[order.id] = []
             for restrant_name in avalible_restaurants[order.id]:
-                order_coords = (coordinate.lat, coordinate.lon)
+                order_coords = (coordinate[0], coordinate[1])
                 restaurant_distance = distance.distance(
                     order_coords,
                     restaurant_coordinates[restrant_name]
