@@ -1,10 +1,8 @@
-import os
 import requests
 
-from dotenv import load_dotenv
-
-from django.db import models
+from django.conf import settings
 from django.core.validators import MinValueValidator
+from django.db import models
 from django.db.models import Sum, F, ForeignKey
 from phonenumber_field.modelfields import PhoneNumberField
 
@@ -43,14 +41,7 @@ class Restaurant(models.Model):
         return self.name
 
     def fetch_coordinates(self, address):
-        try:
-            load_dotenv()
-            apikey = os.environ['YANDEX_APIKEY']
-        except KeyError as error:
-            print(f'KeyError: {error}')
-        except TypeError as error:
-            print(f'TypeError: {error}')
-
+        apikey = settings.YANDEX_APIKEY
         try:
             base_url = "https://geocode-maps.yandex.ru/1.x"
             response = requests.get(base_url, params={
@@ -60,10 +51,6 @@ class Restaurant(models.Model):
             })
             response.raise_for_status()
             found_places = response.json()['response']['GeoObjectCollection']['featureMember']
-
-            if not found_places:
-                return None
-
             most_relevant = found_places[0]
             lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
             return lon, lat

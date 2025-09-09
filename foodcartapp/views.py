@@ -105,7 +105,7 @@ def register_order(request):
                     phone=serializer.validated_data['phone'],
                     address=serializer.validated_data['address']
                 )
-                coordinate = Coordinate.objects.create(
+                Coordinate.objects.create(
                     address=serializer.validated_data['address']
                 )
                 products_ids = [product['product'] for product in serializer.validated_data['products']]

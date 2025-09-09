@@ -1,8 +1,6 @@
-import os
 import requests
 
-from dotenv import load_dotenv
-
+from django.conf import settings
 from django.db import models
 
 
@@ -36,14 +34,7 @@ class Coordinate(models.Model):
         return self.address
 
     def fetch_coordinates(self, address):
-        try:
-            load_dotenv()
-            apikey = os.environ['YANDEX_APIKEY']
-        except KeyError as error:
-            print(f'KeyError: {error}')
-        except TypeError as error:
-            print(f'TypeError: {error}')
-
+        apikey = settings.YANDEX_APIKEY
         try:
             base_url = "https://geocode-maps.yandex.ru/1.x"
             response = requests.get(base_url, params={
@@ -53,10 +44,6 @@ class Coordinate(models.Model):
             })
             response.raise_for_status()
             found_places = response.json()['response']['GeoObjectCollection']['featureMember']
-
-            if not found_places:
-                return None
-
             most_relevant = found_places[0]
             lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
             return lon, lat
@@ -65,7 +52,7 @@ class Coordinate(models.Model):
             return None
 
     def save(self, *args, **kwargs):
-        if self.fetch_coordinates(self.address) and not self.address:
+        if self.fetch_coordinates(self.address): #and not self.address:
             lon, lat = self.fetch_coordinates(self.address)
             self.lon = lon
             self.lat = lat
