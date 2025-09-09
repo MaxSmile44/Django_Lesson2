@@ -9,6 +9,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 
+from collections import defaultdict
 from operator import itemgetter
 
 from foodcartapp.models import Product, Restaurant, Order, RestaurantMenuItem
@@ -101,32 +102,23 @@ def view_orders(request):
     coordinates = Coordinate.objects.all()
 
     addresses_with_coords = {coordinate.address: [coordinate.lat, coordinate.lon] for coordinate in coordinates}
-
     order_menus = {order.id: [product.id for product in order.products.all()] for order in orders}
-
-    restaurant_menus = {}
-    restaurant_coordinates = {}
+    restaurant_coordinates = {item.restaurant.name: (item.restaurant.lat, item.restaurant.lon) for item in items if item.restaurant.lat and item.restaurant.lon}
+    restaurant_menus = defaultdict(set)
     for item in items:
-        restaurant_name = item.restaurant.name
-        coords = (item.restaurant.lat, item.restaurant.lon)
-        restaurant_coordinates[restaurant_name] = coords
-        product_id = item.product.id
-        if restaurant_name not in restaurant_menus:
-            restaurant_menus[restaurant_name] = []
-        restaurant_menus[restaurant_name].append(product_id)
+        restaurant_menus[item.restaurant.name].add(item.product.id)
 
-    avalible_restaurants = {}
+    avalible_restaurants = defaultdict(list)
     for order_key, order_value in order_menus.items():
-        avalible_restaurants[order_key] = []
         for restaurant_key, restaurant_value in restaurant_menus.items():
-            if all([item in restaurant_value for item in order_value]):
+            if (all([item in restaurant_value for item in order_value])
+                and restaurant_key in restaurant_coordinates):
                 avalible_restaurants[order_key].append(restaurant_key)
 
-    avalible_restaurants_with_distance = {}
+    avalible_restaurants_with_distance = defaultdict(list)
     for order in orders:
         if order.address in addresses_with_coords:
             coordinate = addresses_with_coords[order.address]
-            avalible_restaurants_with_distance[order.id] = []
             for restrant_name in avalible_restaurants[order.id]:
                 order_coords = (coordinate[0], coordinate[1])
                 restaurant_distance = distance.distance(
