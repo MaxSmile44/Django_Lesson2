@@ -87,6 +87,12 @@ class RestaurantAdmin(admin.ModelAdmin):
         RestaurantMenuItemInline
     ]
 
+    def save_model(self, request, obj, form, change):
+        coords = obj.fetch_coordinates(obj.address)
+        if coords:
+            obj.lon, obj.lat = coords
+        super().save_model(request, obj, form, change)
+
 
 @admin.register(Product)
 class ProductAdmin(admin.ModelAdmin):

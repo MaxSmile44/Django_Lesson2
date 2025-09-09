@@ -51,19 +51,16 @@ class Restaurant(models.Model):
             })
             response.raise_for_status()
             found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+
+            if not found_places:
+                return None
+
             most_relevant = found_places[0]
             lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
             return lon, lat
         except requests.exceptions.HTTPError as error:
             print(f'HTTPError: {error}')
             return None
-
-    def save(self, *args, **kwargs):
-        if self.fetch_coordinates(self.address):
-            lon, lat = self.fetch_coordinates(self.address)
-            self.lon = lon
-            self.lat = lat
-        super().save(*args, **kwargs)
 
 
 class ProductQuerySet(models.QuerySet):

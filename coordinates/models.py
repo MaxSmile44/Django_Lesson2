@@ -1,6 +1,3 @@
-import requests
-
-from django.conf import settings
 from django.db import models
 
 
@@ -32,28 +29,3 @@ class Coordinate(models.Model):
 
     def __str__(self):
         return self.address
-
-    def fetch_coordinates(self, address):
-        apikey = settings.YANDEX_APIKEY
-        try:
-            base_url = "https://geocode-maps.yandex.ru/1.x"
-            response = requests.get(base_url, params={
-                "geocode": address,
-                "apikey": apikey,
-                "format": "json",
-            })
-            response.raise_for_status()
-            found_places = response.json()['response']['GeoObjectCollection']['featureMember']
-            most_relevant = found_places[0]
-            lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
-            return lon, lat
-        except requests.exceptions.HTTPError as error:
-            print(f'HTTPError: {error}')
-            return None
-
-    def save(self, *args, **kwargs):
-        if self.fetch_coordinates(self.address): #and not self.address:
-            lon, lat = self.fetch_coordinates(self.address)
-            self.lon = lon
-            self.lat = lat
-            super().save(*args, **kwargs)
