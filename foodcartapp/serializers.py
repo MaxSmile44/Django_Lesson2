@@ -23,7 +23,6 @@ class OrderProductSerializer(ModelSerializer):
 
 class OrderSerializer(ModelSerializer):
     products = OrderProductSerializer(many=True, allow_empty=False, write_only=True)
-    phonenumber = serializers.CharField(source='phone')
 
     class Meta:
         model = Order
@@ -39,7 +38,7 @@ class OrderSerializer(ModelSerializer):
         order = Order.objects.create(
             firstname=validated_data['firstname'],
             lastname=validated_data['lastname'],
-            phone=validated_data['phone'],
+            phonenumber=validated_data['phonenumber'],
             address=validated_data['address']
         )
 

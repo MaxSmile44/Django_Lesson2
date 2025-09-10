@@ -191,7 +191,7 @@ class Order(models.Model):
         'фамилия клиента',
         max_length=25
     )
-    phone = PhoneNumberField(
+    phonenumber = PhoneNumberField(
         'телефон клиента',
         region='RU'
     )
