@@ -74,6 +74,11 @@ class OrderProductSerializer(ModelSerializer):
         model = OrderProduct
         fields = ['product', 'quantity']
 
+    def validate_product(self, value):
+        if not Product.objects.filter(id=value).exists():
+            raise ValidationError(f'Продукт с id={value} не существует')
+        return value
+
 
 class OrderSerializer(ModelSerializer):
     products = OrderProductSerializer(many=True, allow_empty=False, write_only=True)
@@ -92,71 +97,59 @@ class OrderSerializer(ModelSerializer):
 
 @api_view(['GET', 'POST'])
 def register_order(request):
-    try:
-        with transaction.atomic():
-            if request.method == 'GET':
-                serializer = OrderSerializer(Order.objects.all(), many=True)
-                return Response(serializer.data)
-            elif request.method == 'POST':
-                serializer = OrderSerializer(data=request.data)
-                serializer.is_valid(raise_exception=True)
+    with transaction.atomic():
+        if request.method == 'GET':
+            serializer = OrderSerializer(Order.objects.all(), many=True)
+            return Response(serializer.data)
+        elif request.method == 'POST':
+            serializer = OrderSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
 
-                coordinates = Coordinate.objects.all()
-                order_addresses = [coordinate.address for coordinate in coordinates]
+            coordinates = Coordinate.objects.all()
+            order_addresses = [coordinate.address for coordinate in coordinates]
 
-                order = Order.objects.create(
-                    firstname=serializer.validated_data['firstname'],
-                    lastname=serializer.validated_data['lastname'],
-                    phone=serializer.validated_data['phone'],
-                    address=serializer.validated_data['address']
-                )
-                if serializer.validated_data['address'] not in order_addresses:
-                    def fetch_coordinates(address):
-                        apikey = settings.YANDEX_APIKEY
-                        try:
-                            base_url = "https://geocode-maps.yandex.ru/1.x"
-                            response = requests.get(base_url, params={
-                                "geocode": address,
-                                "apikey": apikey,
-                                "format": "json",
-                            })
-                            response.raise_for_status()
-                            found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+            order = Order.objects.create(
+                firstname=serializer.validated_data['firstname'],
+                lastname=serializer.validated_data['lastname'],
+                phone=serializer.validated_data['phone'],
+                address=serializer.validated_data['address']
+            )
+            if serializer.validated_data['address'] not in order_addresses:
+                def fetch_coordinates(address):
+                    apikey = settings.YANDEX_APIKEY
+                    try:
+                        base_url = "https://geocode-maps.yandex.ru/1.x"
+                        response = requests.get(base_url, params={
+                            "geocode": address,
+                            "apikey": apikey,
+                            "format": "json",
+                        })
+                        response.raise_for_status()
+                        found_places = response.json()['response']['GeoObjectCollection']['featureMember']
 
-                            if not found_places:
-                                return None
-
-                            most_relevant = found_places[0]
-                            lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
-                            return lon, lat
-                        except requests.exceptions.HTTPError as error:
-                            print(f'HTTPError: {error}')
+                        if not found_places:
                             return None
 
-                    lon, lat = fetch_coordinates(serializer.validated_data['address'])
-                    coordinates.create(
-                        address=serializer.validated_data['address'],
-                        lon=lon,
-                        lat=lat
-                    )
+                        most_relevant = found_places[0]
+                        lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+                        return lon, lat
+                    except requests.exceptions.HTTPError as error:
+                        print(f'HTTPError: {error}')
+                        return None
 
-                products_ids = [product['product'] for product in serializer.validated_data['products']]
-                products = Product.objects.filter(pk__in=products_ids)
-                product_map = {product.pk: product for product in products}
-                for product in serializer.validated_data['products']:
-                    product_obj = product_map.get(product['product'])
-                    OrderProduct.objects.create(order=order, product=product_obj, quantity=product['quantity'], price=product_obj.price)
+                lon, lat = fetch_coordinates(serializer.validated_data['address'])
+                coordinates.create(
+                    address=serializer.validated_data['address'],
+                    lon=lon,
+                    lat=lat
+                )
 
-                content = {'New order added': serializer.validated_data}
-                return Response(content)
+            products_ids = [product['product'] for product in serializer.validated_data['products']]
+            products = Product.objects.filter(pk__in=products_ids)
+            product_map = {product.pk: product for product in products}
+            for product in serializer.validated_data['products']:
+                product_obj = product_map.get(product['product'])
+                OrderProduct.objects.create(order=order, product=product_obj, quantity=product['quantity'], price=product_obj.price)
 
-    except ObjectDoesNotExist as error:
-        return Response(f'{error}', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    except TypeError as error:
-        return Response(f'{error}', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    except KeyError as error:
-        return Response(f'{error}', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    except ValueError as error:
-        return Response(f'{error}', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    except AttributeError as error:
-        return Response(f'{error}', status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            content = {'New order added': serializer.validated_data}
+            return Response(content)
