@@ -94,6 +94,60 @@ class OrderSerializer(ModelSerializer):
             raise ValidationError([f"Invalid phonenumber: {value}"])
         return value
 
+    def create(self, validated_data):
+        order = Order.objects.create(
+            firstname=validated_data['firstname'],
+            lastname=validated_data['lastname'],
+            phone=validated_data['phone'],
+            address=validated_data['address']
+        )
+
+        coordinates = Coordinate.objects.all()
+        order_addresses = [coordinate.address for coordinate in coordinates]
+
+        if validated_data['address'] not in order_addresses:
+            def fetch_coordinates(address):
+                apikey = settings.YANDEX_APIKEY
+                try:
+                    base_url = "https://geocode-maps.yandex.ru/1.x"
+                    response = requests.get(base_url, params={
+                        "geocode": address,
+                        "apikey": apikey,
+                        "format": "json",
+                    })
+                    response.raise_for_status()
+                    found_places = response.json()['response']['GeoObjectCollection']['featureMember']
+
+                    if not found_places:
+                        return None
+
+                    most_relevant = found_places[0]
+                    lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
+                    return lon, lat
+                except requests.exceptions.HTTPError as error:
+                    print(f'HTTPError: {error}')
+                    return None
+
+            lon, lat = fetch_coordinates(validated_data['address'])
+            coordinates.create(
+                address=validated_data['address'],
+                lon=lon,
+                lat=lat
+            )
+
+        products_ids = [product['product'] for product in validated_data['products']]
+        products = Product.objects.filter(pk__in=products_ids)
+        product_map = {product.pk: product for product in products}
+        for product in validated_data['products']:
+            product_obj = product_map.get(product['product'])
+            OrderProduct.objects.create(
+                order=order,
+                product=product_obj,
+                quantity=product['quantity'],
+                price=product_obj.price
+            )
+        return order
+
 
 @api_view(['GET', 'POST'])
 def register_order(request):
@@ -104,52 +158,7 @@ def register_order(request):
         elif request.method == 'POST':
             serializer = OrderSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-
-            coordinates = Coordinate.objects.all()
-            order_addresses = [coordinate.address for coordinate in coordinates]
-
-            order = Order.objects.create(
-                firstname=serializer.validated_data['firstname'],
-                lastname=serializer.validated_data['lastname'],
-                phone=serializer.validated_data['phone'],
-                address=serializer.validated_data['address']
-            )
-            if serializer.validated_data['address'] not in order_addresses:
-                def fetch_coordinates(address):
-                    apikey = settings.YANDEX_APIKEY
-                    try:
-                        base_url = "https://geocode-maps.yandex.ru/1.x"
-                        response = requests.get(base_url, params={
-                            "geocode": address,
-                            "apikey": apikey,
-                            "format": "json",
-                        })
-                        response.raise_for_status()
-                        found_places = response.json()['response']['GeoObjectCollection']['featureMember']
-
-                        if not found_places:
-                            return None
-
-                        most_relevant = found_places[0]
-                        lon, lat = most_relevant['GeoObject']['Point']['pos'].split(" ")
-                        return lon, lat
-                    except requests.exceptions.HTTPError as error:
-                        print(f'HTTPError: {error}')
-                        return None
-
-                lon, lat = fetch_coordinates(serializer.validated_data['address'])
-                coordinates.create(
-                    address=serializer.validated_data['address'],
-                    lon=lon,
-                    lat=lat
-                )
-
-            products_ids = [product['product'] for product in serializer.validated_data['products']]
-            products = Product.objects.filter(pk__in=products_ids)
-            product_map = {product.pk: product for product in products}
-            for product in serializer.validated_data['products']:
-                product_obj = product_map.get(product['product'])
-                OrderProduct.objects.create(order=order, product=product_obj, quantity=product['quantity'], price=product_obj.price)
+            order = serializer.create(serializer.validated_data)
 
             content = {'New order added': serializer.validated_data}
             return Response(content)
