@@ -9,16 +9,11 @@ from coordinates.models import Coordinate
 
 
 class OrderProductSerializer(ModelSerializer):
-    product = serializers.IntegerField()
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
 
     class Meta:
         model = OrderProduct
         fields = ['product', 'quantity']
-
-    def validate_product(self, value):
-        if not Product.objects.filter(id=value).exists():
-            raise ValidationError(f'Продукт с id={value} не существует')
-        return value
 
 
 class OrderSerializer(ModelSerializer):
