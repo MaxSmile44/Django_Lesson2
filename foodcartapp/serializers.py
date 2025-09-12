@@ -7,6 +7,8 @@ from rest_framework.serializers import ModelSerializer, ValidationError
 from .models import Order, OrderProduct, Product
 from coordinates.models import Coordinate
 
+from phonenumber_field.serializerfields import PhoneNumberField
+
 
 class OrderProductSerializer(ModelSerializer):
     product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.values_list('id', flat=True))
@@ -18,16 +20,11 @@ class OrderProductSerializer(ModelSerializer):
 
 class OrderSerializer(ModelSerializer):
     products = OrderProductSerializer(many=True, allow_empty=False, write_only=True)
+    phonenumber = str(PhoneNumberField(region='RU'))
 
     class Meta:
         model = Order
         fields = ['firstname', 'lastname', 'phonenumber', 'address', 'products']
-
-    def validate_phonenumber(self, value):
-        phone = phonenumbers.parse(value, 'RU')
-        if not phonenumbers.is_valid_number(phone):
-            raise ValidationError([f"Invalid phonenumber: {value}"])
-        return value
 
     def create(self, validated_data):
         order = Order.objects.create(

@@ -1,7 +1,6 @@
 from django.db import transaction
 from django.http import JsonResponse
 from django.templatetags.static import static
-from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -72,6 +71,7 @@ class OrderView(APIView):
             serializer = OrderSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             serializer.create(serializer.validated_data)
+            print(serializer.validated_data)
 
             content = {'New order added': serializer.validated_data}
             return Response(content)
