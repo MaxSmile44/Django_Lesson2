@@ -122,8 +122,6 @@ INTERNAL_IPS = [
 
 YANDEX_APIKEY = os.environ['YANDEX_APIKEY']
 
-PHONENUMBER_DB_FORMAT = 'E164'
-
 STATICFILES_DIRS = [
     os.path.join(BASE_DIR, "assets"),
     os.path.join(BASE_DIR, "bundles"),
