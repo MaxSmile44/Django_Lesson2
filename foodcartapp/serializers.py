@@ -9,9 +9,7 @@ from coordinates.models import Coordinate
 
 
 class OrderProductSerializer(ModelSerializer):
-    # product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.all())
-
-    product = serializers.IntegerField()
+    product = serializers.PrimaryKeyRelatedField(queryset=Product.objects.values_list('id', flat=True))
 
     class Meta:
         model = OrderProduct
