@@ -1,9 +1,8 @@
-import phonenumbers
 import requests
 
 from django.conf import settings
 from rest_framework import serializers
-from rest_framework.serializers import ModelSerializer, ValidationError
+from rest_framework.serializers import ModelSerializer
 from .models import Order, OrderProduct, Product
 from coordinates.models import Coordinate
 
